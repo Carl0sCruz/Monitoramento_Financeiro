@@ -1,5 +1,3 @@
-import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
 import { OverviewCards } from "@/components/dashboard/overview-cards"
 import { RecentTransactions } from "@/components/dashboard/recent-transactions"
 import { ExpenseChart } from "@/components/dashboard/expense-chart"
@@ -61,21 +59,12 @@ const mockMonthlyData = [
 ]
 
 export default async function DashboardPage() {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) {
-    redirect("/auth/login")
-  }
-
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
         <div className="flex items-center space-x-2">
-          <p className="text-sm text-muted-foreground">Bem-vindo de volta, {user.email}</p>
+          <p className="text-sm text-muted-foreground">Bem-vindo ao seu painel financeiro</p>
         </div>
       </div>
 
