@@ -1,27 +1,18 @@
-import { createClient } from "@/lib/supabase/server"
 import { type NextRequest, NextResponse } from "next/server"
+import { getMockCategories, addMockCategory } from "@/lib/mock-data"
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient()
-
-    const userId = "00000000-0000-0000-0000-000000000000"
-
     const { searchParams } = new URL(request.url)
     const tipo = searchParams.get("tipo")
 
-    let query = supabase.from("categorias").select("*").eq("user_id", userId).order("nome", { ascending: true })
+    let categories = getMockCategories()
 
     if (tipo) {
-      query = query.eq("tipo", tipo)
+      categories = categories.filter((c) => c.tipo === tipo)
     }
 
-    const { data: categories, error } = await query
-
-    if (error) {
-      console.error("Error fetching categories:", error)
-      return NextResponse.json({ error: "Failed to fetch categories" }, { status: 500 })
-    }
+    categories.sort((a, b) => a.nome.localeCompare(b.nome))
 
     return NextResponse.json({ categories })
   } catch (error) {
@@ -32,10 +23,6 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
-
-    const userId = "00000000-0000-0000-0000-000000000000"
-
     const body = await request.json()
     const { nome, tipo, cor = "#6366f1", icone } = body
 
@@ -43,22 +30,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
-    const { data: category, error } = await supabase
-      .from("categorias")
-      .insert({
-        user_id: userId,
-        nome,
-        tipo,
-        cor,
-        icone,
-      })
-      .select()
-      .single()
-
-    if (error) {
-      console.error("Error creating category:", error)
-      return NextResponse.json({ error: "Failed to create category" }, { status: 500 })
-    }
+    const category = addMockCategory({
+      nome,
+      tipo,
+      cor,
+      icone,
+    })
 
     return NextResponse.json({ category })
   } catch (error) {

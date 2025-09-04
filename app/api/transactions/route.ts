@@ -1,12 +1,8 @@
-import { createClient } from "@/lib/supabase/server"
 import { type NextRequest, NextResponse } from "next/server"
+import { getMockTransactions, addMockTransaction } from "@/lib/mock-data"
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient()
-
-    const userId = "00000000-0000-0000-0000-000000000000" // ID fixo para uso sem autenticação
-
     const { searchParams } = new URL(request.url)
     const limit = Number.parseInt(searchParams.get("limit") || "50")
     const offset = Number.parseInt(searchParams.get("offset") || "0")
@@ -16,42 +12,29 @@ export async function GET(request: NextRequest) {
     const dataInicio = searchParams.get("dataInicio")
     const dataFim = searchParams.get("dataFim")
 
-    let query = supabase
-      .from("transacoes")
-      .select(`
-        *,
-        categorias(nome, cor),
-        contas(nome)
-      `)
-      .eq("user_id", userId)
-      .order("data_transacao", { ascending: false })
-      .order("created_at", { ascending: false })
-      .range(offset, offset + limit - 1)
+    let transactions = getMockTransactions()
 
+    // Apply filters
     if (categoria) {
-      query = query.eq("categoria_id", categoria)
+      transactions = transactions.filter((t) => t.categoria_id === categoria)
     }
     if (conta) {
-      query = query.eq("conta_id", conta)
+      transactions = transactions.filter((t) => t.conta_id === conta)
     }
     if (tipo) {
-      query = query.eq("tipo", tipo)
+      transactions = transactions.filter((t) => t.tipo === tipo)
     }
     if (dataInicio) {
-      query = query.gte("data_transacao", dataInicio)
+      transactions = transactions.filter((t) => t.data_transacao >= dataInicio)
     }
     if (dataFim) {
-      query = query.lte("data_transacao", dataFim)
+      transactions = transactions.filter((t) => t.data_transacao <= dataFim)
     }
 
-    const { data: transactions, error } = await query
+    // Apply pagination
+    const paginatedTransactions = transactions.slice(offset, offset + limit)
 
-    if (error) {
-      console.error("Error fetching transactions:", error)
-      return NextResponse.json({ error: "Failed to fetch transactions" }, { status: 500 })
-    }
-
-    return NextResponse.json({ transactions })
+    return NextResponse.json({ transactions: paginatedTransactions })
   } catch (error) {
     console.error("Error in GET /api/transactions:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
@@ -60,10 +43,6 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
-
-    const userId = "00000000-0000-0000-0000-000000000000" // ID fixo para uso sem autenticação
-
     const body = await request.json()
     const { conta_id, categoria_id, descricao, valor, tipo, data_transacao, observacoes } = body
 
@@ -72,39 +51,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
-    // Insert transaction
-    const { data: transaction, error: transactionError } = await supabase
-      .from("transacoes")
-      .insert({
-        user_id: userId,
-        conta_id,
-        categoria_id,
-        descricao,
-        valor: Number.parseFloat(valor),
-        tipo,
-        data_transacao,
-        observacoes,
-      })
-      .select()
-      .single()
-
-    if (transactionError) {
-      console.error("Error creating transaction:", transactionError)
-      return NextResponse.json({ error: "Failed to create transaction" }, { status: 500 })
-    }
-
-    // Update account balance
-    const valorAjustado = tipo === "despesa" ? -Math.abs(Number.parseFloat(valor)) : Math.abs(Number.parseFloat(valor))
-
-    const { error: balanceError } = await supabase.rpc("update_account_balance", {
-      account_id: conta_id,
-      amount: valorAjustado,
+    const transaction = addMockTransaction({
+      conta_id,
+      categoria_id,
+      descricao,
+      valor: Number.parseFloat(valor),
+      tipo,
+      data_transacao,
+      observacoes,
     })
-
-    if (balanceError) {
-      console.error("Error updating account balance:", balanceError)
-      // Note: In a production app, you'd want to rollback the transaction here
-    }
 
     return NextResponse.json({ transaction })
   } catch (error) {
