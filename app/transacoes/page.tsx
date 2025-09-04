@@ -54,8 +54,6 @@ export default function TransacoesPage() {
       if (response.ok) {
         const data = await response.json()
         setTransactions(data.transactions || [])
-      } else if (response.status === 401) {
-        router.push("/auth/login")
       }
     } catch (error) {
       console.error("Error fetching transactions:", error)

@@ -62,8 +62,6 @@ export default function OrcamentosPage() {
       if (response.ok) {
         const data = await response.json()
         setBudgets(data.budgets || [])
-      } else if (response.status === 401) {
-        router.push("/auth/login")
       }
     } catch (error) {
       console.error("Error fetching budgets:", error)
