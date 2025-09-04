@@ -5,13 +5,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   try {
     const supabase = await createClient()
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const userId = "00000000-0000-0000-0000-000000000000"
 
     const body = await request.json()
     const { nome, tipo_conta_id, ativa } = body
@@ -25,7 +19,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         updated_at: new Date().toISOString(),
       })
       .eq("id", params.id)
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .select()
       .single()
 
@@ -45,13 +39,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   try {
     const supabase = await createClient()
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const userId = "00000000-0000-0000-0000-000000000000"
 
     // Check if account has transactions
     const { data: transactions, error: transactionError } = await supabase
@@ -69,7 +57,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ error: "Cannot delete account with existing transactions" }, { status: 400 })
     }
 
-    const { error } = await supabase.from("contas").delete().eq("id", params.id).eq("user_id", user.id)
+    const { error } = await supabase.from("contas").delete().eq("id", params.id).eq("user_id", userId)
 
     if (error) {
       console.error("Error deleting account:", error)

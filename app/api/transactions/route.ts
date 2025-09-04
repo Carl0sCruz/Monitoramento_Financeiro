@@ -5,13 +5,7 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const userId = "00000000-0000-0000-0000-000000000000" // ID fixo para uso sem autenticação
 
     const { searchParams } = new URL(request.url)
     const limit = Number.parseInt(searchParams.get("limit") || "50")
@@ -29,7 +23,7 @@ export async function GET(request: NextRequest) {
         categorias(nome, cor),
         contas(nome)
       `)
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .order("data_transacao", { ascending: false })
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1)
@@ -68,13 +62,7 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const userId = "00000000-0000-0000-0000-000000000000" // ID fixo para uso sem autenticação
 
     const body = await request.json()
     const { conta_id, categoria_id, descricao, valor, tipo, data_transacao, observacoes } = body
@@ -88,7 +76,7 @@ export async function POST(request: NextRequest) {
     const { data: transaction, error: transactionError } = await supabase
       .from("transacoes")
       .insert({
-        user_id: user.id,
+        user_id: userId,
         conta_id,
         categoria_id,
         descricao,

@@ -5,13 +5,7 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const userId = "00000000-0000-0000-0000-000000000000"
 
     const { searchParams } = new URL(request.url)
     const ano = searchParams.get("ano") || new Date().getFullYear().toString()
@@ -23,7 +17,7 @@ export async function GET(request: NextRequest) {
         *,
         categorias(nome, cor, icone)
       `)
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .eq("ano", Number.parseInt(ano))
       .eq("ativo", true)
       .order("created_at", { ascending: false })
@@ -45,7 +39,7 @@ export async function GET(request: NextRequest) {
         let spendingQuery = supabase
           .from("transacoes")
           .select("valor")
-          .eq("user_id", user.id)
+          .eq("user_id", userId)
           .eq("categoria_id", budget.categoria_id)
           .eq("tipo", "despesa")
           .gte("data_transacao", `${budget.ano}-01-01`)
@@ -80,13 +74,7 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const userId = "00000000-0000-0000-0000-000000000000"
 
     const body = await request.json()
     const { categoria_id, valor_limite, periodo, mes, ano, ativo = true } = body
@@ -103,7 +91,7 @@ export async function POST(request: NextRequest) {
     let existingQuery = supabase
       .from("orcamentos")
       .select("id")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .eq("categoria_id", categoria_id)
       .eq("periodo", periodo)
       .eq("ano", ano)
@@ -121,7 +109,7 @@ export async function POST(request: NextRequest) {
     const { data: budget, error } = await supabase
       .from("orcamentos")
       .insert({
-        user_id: user.id,
+        user_id: userId,
         categoria_id,
         valor_limite: Number.parseFloat(valor_limite),
         periodo,

@@ -1,18 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createServerClient } from "@/lib/supabase/server"
-import { cookies } from "next/headers"
+import { createClient } from "@/lib/supabase/server"
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = cookies()
-    const supabase = createServerClient(cookieStore)
+    const supabase = await createClient()
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
-    }
+    const userId = "00000000-0000-0000-0000-000000000000"
 
     const { transactions } = await request.json()
 
@@ -21,12 +14,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user's default account and categories
-    const { data: accounts } = await supabase.from("accounts").select("id").eq("user_id", user.id).limit(1)
+    const { data: accounts } = await supabase.from("contas").select("id").eq("user_id", userId).limit(1)
 
-    const { data: categories } = await supabase.from("categories").select("id, name").eq("user_id", user.id)
+    const { data: categories } = await supabase.from("categorias").select("id, nome").eq("user_id", userId)
 
     const defaultAccountId = accounts?.[0]?.id
-    const categoryMap = new Map(categories?.map((c) => [c.name.toLowerCase(), c.id]) || [])
+    const categoryMap = new Map(categories?.map((c) => [c.nome.toLowerCase(), c.id]) || [])
 
     // Prepare transactions for insertion
     const transactionsToInsert = transactions
@@ -39,23 +32,23 @@ export async function POST(request: NextRequest) {
         }
 
         return {
-          user_id: user.id,
-          account_id: defaultAccountId,
-          category_id: categoryId,
-          description: t.description,
-          amount: t.amount,
-          type: t.type,
-          date: t.date,
+          user_id: userId,
+          conta_id: defaultAccountId,
+          categoria_id: categoryId,
+          descricao: t.description,
+          valor: t.amount,
+          tipo: t.type === "income" ? "receita" : "despesa",
+          data_transacao: t.date,
           created_at: new Date().toISOString(),
         }
       })
-      .filter((t) => t.account_id) // Only insert if we have an account
+      .filter((t) => t.conta_id) // Only insert if we have an account
 
     if (transactionsToInsert.length === 0) {
       return NextResponse.json({ error: "Nenhuma conta encontrada para importar transações" }, { status: 400 })
     }
 
-    const { data, error } = await supabase.from("transactions").insert(transactionsToInsert).select()
+    const { data, error } = await supabase.from("transacoes").insert(transactionsToInsert).select()
 
     if (error) {
       console.error("Erro ao inserir transações:", error)

@@ -5,13 +5,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   try {
     const supabase = await createClient()
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const userId = "00000000-0000-0000-0000-000000000000"
 
     const body = await request.json()
     const { categoria_id, valor_limite, periodo, mes, ano, ativo } = body
@@ -27,7 +21,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         ativo,
       })
       .eq("id", params.id)
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .select()
       .single()
 
@@ -47,15 +41,9 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   try {
     const supabase = await createClient()
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const userId = "00000000-0000-0000-0000-000000000000"
 
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    const { error } = await supabase.from("orcamentos").delete().eq("id", params.id).eq("user_id", user.id)
+    const { error } = await supabase.from("orcamentos").delete().eq("id", params.id).eq("user_id", userId)
 
     if (error) {
       console.error("Error deleting budget:", error)

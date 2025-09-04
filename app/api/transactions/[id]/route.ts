@@ -5,13 +5,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   try {
     const supabase = await createClient()
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const userId = "00000000-0000-0000-0000-000000000000"
 
     const body = await request.json()
     const { conta_id, categoria_id, descricao, valor, tipo, data_transacao, observacoes } = body
@@ -21,7 +15,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       .from("transacoes")
       .select("*")
       .eq("id", params.id)
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .single()
 
     if (fetchError || !originalTransaction) {
@@ -42,7 +36,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         updated_at: new Date().toISOString(),
       })
       .eq("id", params.id)
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .select()
       .single()
 
@@ -89,20 +83,14 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   try {
     const supabase = await createClient()
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const userId = "00000000-0000-0000-0000-000000000000"
 
     // Get transaction for balance adjustment
     const { data: transaction, error: fetchError } = await supabase
       .from("transacoes")
       .select("*")
       .eq("id", params.id)
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .single()
 
     if (fetchError || !transaction) {
@@ -110,7 +98,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 
     // Delete transaction
-    const { error: deleteError } = await supabase.from("transacoes").delete().eq("id", params.id).eq("user_id", user.id)
+    const { error: deleteError } = await supabase.from("transacoes").delete().eq("id", params.id).eq("user_id", userId)
 
     if (deleteError) {
       console.error("Error deleting transaction:", deleteError)

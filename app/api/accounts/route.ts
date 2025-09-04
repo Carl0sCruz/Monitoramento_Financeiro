@@ -5,13 +5,7 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const userId = "00000000-0000-0000-0000-000000000000"
 
     const { data: accounts, error } = await supabase
       .from("contas")
@@ -19,7 +13,7 @@ export async function GET(request: NextRequest) {
         *,
         tipos_conta(nome, descricao)
       `)
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .order("created_at", { ascending: false })
 
     if (error) {
@@ -38,13 +32,7 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const userId = "00000000-0000-0000-0000-000000000000"
 
     const body = await request.json()
     const { nome, tipo_conta_id, saldo_inicial, ativa = true } = body
@@ -56,7 +44,7 @@ export async function POST(request: NextRequest) {
     const { data: account, error } = await supabase
       .from("contas")
       .insert({
-        user_id: user.id,
+        user_id: userId,
         nome,
         tipo_conta_id,
         saldo_inicial: Number.parseFloat(saldo_inicial),

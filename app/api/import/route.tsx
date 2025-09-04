@@ -1,6 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createServerClient } from "@/lib/supabase/server"
-import { cookies } from "next/headers"
+import { createClient } from "@/lib/supabase/server"
 
 interface ParsedTransaction {
   date: string
@@ -75,15 +74,7 @@ function parseOFX(content: string): ParsedTransaction[] {
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = cookies()
-    const supabase = createServerClient(cookieStore)
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
-    }
+    const supabase = await createClient()
 
     const formData = await request.formData()
     const file = formData.get("file") as File

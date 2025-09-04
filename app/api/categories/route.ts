@@ -5,18 +5,12 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const userId = "00000000-0000-0000-0000-000000000000"
 
     const { searchParams } = new URL(request.url)
     const tipo = searchParams.get("tipo")
 
-    let query = supabase.from("categorias").select("*").eq("user_id", user.id).order("nome", { ascending: true })
+    let query = supabase.from("categorias").select("*").eq("user_id", userId).order("nome", { ascending: true })
 
     if (tipo) {
       query = query.eq("tipo", tipo)
@@ -40,13 +34,7 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const userId = "00000000-0000-0000-0000-000000000000"
 
     const body = await request.json()
     const { nome, tipo, cor = "#6366f1", icone } = body
@@ -58,7 +46,7 @@ export async function POST(request: NextRequest) {
     const { data: category, error } = await supabase
       .from("categorias")
       .insert({
-        user_id: user.id,
+        user_id: userId,
         nome,
         tipo,
         cor,
